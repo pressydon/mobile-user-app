@@ -16,6 +16,7 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.ice.riders",
       "supportsTablet": true
     },
     "android": {
