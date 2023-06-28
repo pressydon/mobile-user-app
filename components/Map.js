@@ -99,8 +99,8 @@ let initialOrigin = { latitude: origin?.location.lat, longitude: origin?.locatio
         // mapType="mutedStandard"
         // rotateEnabled={false}
         initialRegion={{
-            latitude: origin?.location.lat,
-            longitude: origin?.location.lng,
+            latitude: !origin ? 6.339185: origin?.location.lat,
+            longitude: !origin ? 5.617447: origin?.location.lng,
             latitudeDelta: 0.005,
             longitudeDelta: 0.005,
       }}

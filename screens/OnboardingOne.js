@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function OnboardingOne() {
     const navigation = useNavigation()
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
         marginLeft: 70,
         marginTop:20,
         fontSize: 20,
-        fontWeight: 'bold'
+        fontWeight: (Platform.OS === 'ios') ? 'bold' : 600 
   },
   onboardingOneText:{
           alignItems: 'center',
@@ -66,13 +66,13 @@ const styles = StyleSheet.create({
     width:5,
     height:5,
     backgroundColor: 'lightgray',
-    borderRadius: '50%'
+    borderRadius: 50
   },
   slideDotsThree:{
     width:5,
     height:5,
     backgroundColor: 'lightgray',
-    borderRadius: '50%'
+    borderRadius: 50
   },
   onboardingNext:{
     textAlign:'right',

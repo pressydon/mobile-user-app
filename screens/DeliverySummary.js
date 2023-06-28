@@ -8,10 +8,12 @@ import { selectDeliveryMedium, selectDeliveryType, selectDestination, selectOrig
 import { selectUserInfo } from "../slices/authSlice";
 import axios from 'axios'
 import {useDispatch} from 'react-redux'
+import Loader from "../components/Loader";
+import { useState } from "react";
 
 const SURGE_CHARGE_RATE = 1.5;
 
-export default DeliverySummary=()=>{
+export default DeliverySummary=({route})=>{
 
     const navigation = useNavigation()
     const travelTimeInformation = useSelector(selectTravelTimeInformation)
@@ -20,15 +22,85 @@ export default DeliverySummary=()=>{
     const destination = useSelector(selectDestination)
     const deliveryType = useSelector(selectDeliveryType)
     const deliveryDetails = useSelector(selectDeliveryDetails)
-
+    const userInfo = useSelector(selectUserInfo)
+    const [loading, setLoading] = useState(false)
     // console.log(deliveryDetails)
     // console.log(travelTimeInformation.distance.text)
     // console.log(deliveryMedium)
     // console.log(origin)
 
+    const {matchedData} = route.params
+
+    console.log('----=====----',matchedData)
     const parcelImages = deliveryDetails.parcelImages
 
-    console.log(parcelImages)
+    // console.log('===----====',parcelImages[0]?.url)
+
+    console.log(deliveryDetails)
+
+  
+    let headersList = {
+        "Accept": "/",
+        "Authorization": `Bearer ${userInfo.token}`
+      }
+  
+      // console.log('-----',deliveryDetails)
+  
+  
+      const fetchDriverReply = async () => {
+        setLoading(true);
+        console.log('fetching......');
+  
+        let reqOptions;
+        try {
+  
+          // if (deliveryDetails?.locations.length) {
+            reqOptions = {
+              url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}/${deliveryDetails.locations[0].driver_id}`,
+              method: "GET",
+              headers: headersList,
+            };
+  
+            const response = await axios.request(reqOptions);
+            setMatchedData(response.data.status);
+            console.log('---', matchedData);
+  
+            if (response.data.status[0].status === 1) {
+                navigation.navigate('Payment Options')
+              navigation.navigate('Delivery Summary', { matchedData: matchedData });
+            } else if (response.data.status[0].status === 0 && deliveryDetails.locations[1]) {
+              reqOptions = {
+                url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}/${deliveryDetails.locations[1].driver_id}`,
+                method: "GET",
+                headers: headersList,
+              };
+  
+              const responseTWO = await axios.request(reqOptions);
+              setMatchedData(responseTWO.data.status);
+              console.log('---', matchedData);
+  
+              if (responseTWO.data.status[0].status === 1) {
+                navigation.navigate('Delivery Summary', { matchedData: matchedData });
+              } else {
+                console.log('modal to redirect to scheduled');
+                setModalVisible(true);
+                setLoading(false);
+              }
+            } 
+            // else {
+              // console.log('modal to redirect to scheduled');
+              // setModalVisible(true);
+              // setLoading(false);
+            // }
+          // }
+        } catch (error) {
+          console.log(error.response);
+        } 
+        // finally {
+        //   setLoading(false);
+        // }
+      };
+  
 
     return(
         <ScrollView>
@@ -65,7 +137,7 @@ export default DeliverySummary=()=>{
 </View>
 
             {/* checkout ends */}
-            <View style={{height:700}}>
+            <View style={{height:500}}>
             {/* <Image
                 style={{width:"100%",height:300}}
                 resizeMode="cover"
@@ -79,24 +151,24 @@ export default DeliverySummary=()=>{
 
              </View>
 
-            <Text  style={{margin:20, fontWeight:'bold', fontSize:16}}>Request accepted by:</Text>
+            {/* <Text  style={{margin:20, fontWeight:'bold', fontSize:16}}>Request accepted by:</Text>
             <View  style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
             <Image
                 style={{width:118,height:118, borderRadius: 50}}
-                resizeMode="contain"
-                source={require('../assets/driver.png')}
+                resizeMode="cover"
+                source={{uri: matchedData[0]?.driver.img}}
              />
 
              <View >
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Delivery Agent : George Bush</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Delivery Agent : {matchedData[0]?.driver.name}</Text>
                 <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Vehicle Type : yamaha Bike </Text>
                 <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Vehicle Color : Red</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Agent ID: 6789</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Agent ID: {matchedData[0]?.driver.id}</Text>
                 <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Plate no : LAG564OS</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Phone no : 08067919787</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Phone no : +234 {matchedData[0]?.driver.phoneNumber}</Text>
              </View>
 
-            </View>
+            </View> */}
 
             <View style={{width:'90%', height: 2, backgroundColor: 'gray', margin:20, alignSelf:'center'}}></View>
             <View style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -109,15 +181,15 @@ export default DeliverySummary=()=>{
             </View>
             
             <View style={{width:'80%',alignSelf:'center'}}>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Senders name : {deliveryDetails.data.sendersName}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Senders Phone number : {deliveryDetails.data.sendersPhone} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Receivers name : {deliveryDetails.data.receiversName} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Receivers Phone number: {deliveryDetails.data.receiversPhone} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Delivery Code: {deliveryDetails.data.id} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Parcel name : {deliveryDetails.data.parcelName} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Parcel type : {deliveryDetails.data.parcelType} </Text>
-                {/* <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Parcel description : A new pair of brown nike boots</Text> */}
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:500}}>Delivery Instruction : {deliveryDetails.data.deliveryInstruction}  </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders name : {deliveryDetails.data.sendersName}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders Phone number : {deliveryDetails.data.sendersPhone} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers name : {deliveryDetails.data.receiversName} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers Phone number: {deliveryDetails.data.receiversPhone} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Code: {deliveryDetails.data.id} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel name : {deliveryDetails.data.parcelName} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel type : {deliveryDetails.data.parcelType} </Text>
+                {/* <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel description : A new pair of brown nike boots</Text> */}
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Instruction : {deliveryDetails.data.deliveryInstruction}  </Text>
              </View>
 
             <View style={{marginTop:20,alignSelf:'right', width:'100%',display:'flex', flexDirection:'row', alignItems:'flex-end',justifyContent:'space-around'}}>
@@ -152,11 +224,7 @@ export default DeliverySummary=()=>{
                 resizeMode="cover"
                 source={{uri: parcelImages[1]?.url}}
              />
-              {/* <Image
-                style={{width:82,height:71, borderRadius: 10}}
-                resizeMode="cover"
-                source={{uri: parcelImages[2]?.url}}
-             />  */}
+            
              </View>
 
              <View style={{margin:20}}>
@@ -183,8 +251,10 @@ export default DeliverySummary=()=>{
 
              </View>
 
+             {loading ? <Loader loadingText='wait while we pair you with an available agent around your pickup location' /> : null}
+
              <TouchableOpacity
-                onPress={() => navigation.navigate('Payment Options')}
+                onPress={fetchDriverReply}
                  style={styles.button} >
                      <Text style={{fontWeight: 'bold', color: 'black', fontSize: 18}}>Proceed</Text>
                  </TouchableOpacity>

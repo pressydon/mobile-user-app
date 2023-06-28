@@ -5,6 +5,8 @@ import { Card, Icon,  } from 'react-native-elements'
 import tw from 'tailwind-react-native-classnames';
 import HomeNavBottom from '../components/HomeNavBottom';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { selectAllDeliveries } from '../slices/deliveries';
+import { useSelector } from 'react-redux';
 
 const data = [
     {
@@ -62,6 +64,7 @@ export default function CompletedDeliveryHistoryHomepage() {
   const [showTime, setShowTime] = useState('');
 
 
+
     const [leftButton, setLeftButton] = useState(styles.completedButton);
   const [rightButton, setRightButton] = useState('')
   const [isTextGoldLeft, setIsTextGoldLeft] = useState(styles.textGold)
@@ -69,14 +72,15 @@ export default function CompletedDeliveryHistoryHomepage() {
   const [filteredDelivery, setFilteredDelivery] = useState([])
   // const [filteredDeliveryCompleted, setFilteredDeliveryCompleted] = useState([])
 
+  const allDeliveries = useSelector(selectAllDeliveries)
 
-
+console.log(allDeliveries)
 
   
   useEffect(()=>{
 
       // Filter the data array based on the condition
-      const filteredData = data.filter((d) => d.status === 'after delivery');
+      const filteredData = allDeliveries.filter((d) => d.status === 'at drop off');
       setFilteredDelivery(filteredData);
     
 
@@ -90,7 +94,7 @@ export default function CompletedDeliveryHistoryHomepage() {
     setRightButton('')
     setIsTextGoldLeft(styles.textGold)
     setIsTextGoldRight('')
-    const filteredData = data.filter((d) => d.status === 'after delivery');
+    const filteredData = allDeliveries.filter((d) => d.status === 'at drop off');
     setFilteredDelivery(filteredData);
    
     setCompletedButton(true)
@@ -102,7 +106,7 @@ export default function CompletedDeliveryHistoryHomepage() {
     setIsTextGoldRight(styles.textGold)
     setIsTextGoldLeft('')
 
-    const filteredData = data.filter((d) => d.status === 'cancelled delivery');
+    const filteredData = allDeliveries.filter((d) => d.status === 'cancelled');
     setFilteredDelivery(filteredData);
    
     setCompletedButton(false)
@@ -242,7 +246,7 @@ export default function CompletedDeliveryHistoryHomepage() {
 
             </View>
 
-          {/* {!completedButton ?  */}
+          {filteredDelivery.length ? 
            <View style={{alignSelf:'center'}}>
 
       <FlatList
@@ -263,11 +267,11 @@ export default function CompletedDeliveryHistoryHomepage() {
              
                <Image
                  style={{width: 140, height: 70, resizeMode:'cover',borderRadius:5,marginTop:-10,alignSelf:'center' }}
-                source={{ uri: item.image}} 
+                source={{ uri: item.img ? item.img : 'https://images.unsplash.com/photo-1674620213535-9b2a2553ef40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1064&q=80'}} 
              />
              <View style={{width:150,margin:10 }}>
-             <Text  style={{ fontSize:15,marginBottom:5 }} >Parcel name: {item.name}</Text>
-             <Text  style={{ fontSize:15, marginBottom:10}}   >Delivery Id: {item.deliveryID}</Text>
+             <Text  style={{ fontSize:15,marginBottom:5 }} >Parcel name: {item.parcelName}</Text>
+             <Text  style={{ fontSize:15, marginBottom:10}}   >Delivery Id: {item.id}</Text>
              </View>
 
             </View>
@@ -281,45 +285,19 @@ export default function CompletedDeliveryHistoryHomepage() {
       />
 
             </View>
-          {/* : */}
-          {/* <View style={{alignSelf:'center'}}> */}
-{/* 
-          <FlatList
-                    //   style={styles.content}
-                       data={filteredDelivery}
-                      keyExtractor={(item) => item.id}
-                      numColumns={2}
-                     renderItem={({item})=>(
-                        <Card>
-    
-                       
-                     <TouchableOpacity
-                          style={styles.item}
-                    onPress={()=> navigation.navigate('CompletedViewDetails', {item: item})}
-                      >
-                      <View style={{display:'flex',alignItems:"center", justifyContent:"center",}}>
-                 
-                   <Image
-                     style={{width: 140, height: 70, resizeMode:'cover',borderRadius:5,marginTop:-10,alignSelf:'center' }}
-                    source={{ uri: item.image}} 
-                 />
-                 <View style={{width:150,margin:10 }}>
-                 <Text  style={{ fontSize:15,marginBottom:5 }} >Parcel name: {item.name}</Text>
-                 <Text  style={{ fontSize:15, marginBottom:10}}   >Delivery Id: {item.deliveryID}</Text>
-                 </View>
-    
-                </View>
-    
-               <TouchableOpacity style={{alignSelf:'center', backgroundColor:'goldenrod',padding:10, borderRadius:5}} >
-                <Text style={{color:'white'}}>View Details</Text>
-               </TouchableOpacity>
-            </TouchableOpacity>
-            </Card>
-        )}
-          />
-    
-                </View> */}
-          {/* } */}
+            :
+            <View style={{display:'flex', alignItems:'center', justifyContent:'center',alignSelf:'center'}}> 
+
+            <Image
+                 style={{width: 300, height: 200, resizeMode:'cover',marginTop:70 }}
+                 source={require('../assets/emptyPending.png')}
+             />
+             <Text style={{fontSize:20}}>No Pending Deliveries</Text>
+
+       </View>
+}
+       
+
 
         </View>
 

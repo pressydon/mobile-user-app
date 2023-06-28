@@ -3,123 +3,102 @@ import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View
 import { Icon, withBadge } from 'react-native-elements'
 import tw from 'tailwind-react-native-classnames';
 import HomeNavBottom from '../components/HomeNavBottom';
+import { useContext, useEffect } from 'react';
+import { setAllDeliveries,selectAllDeliveries } from '../slices/deliveries';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectUserInfo } from '../slices/authSlice';
+import axios from 'axios';
 
-const data = [
-    {
-        id: 1,
-        image: 'https://images.pexels.com/photos/2253835/pexels-photo-2253835.jpeg?auto=compress&cs=tinysrgb&w=600',
-        name:'Makeup kits',
-        deliveryID: 12534,
-        
-    },
-    {
-        id: 2,
-        image: 'https://images.pexels.com/photos/2783873/pexels-photo-2783873.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Watch',
-        deliveryID: 12534,
-    
-    },
-    {
-        id: 3,
-        image: 'https://images.pexels.com/photos/2638026/pexels-photo-2638026.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Milkshake',
-        deliveryID: 12534,
-      
-    },
-    {
-        id: 4,
-        image: 'https://images.pexels.com/photos/3640734/pexels-photo-3640734.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Beard oil',
-        deliveryID: 12534,
-      
-    },
-    {
-        id: 5,
-        image: 'https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Pancake',
-        deliveryID: 12534,
-       
-    },
-    {
-        id: 6,
-        image: 'https://images.pexels.com/photos/1040881/pexels-photo-1040881.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Bruno Fucking Fernandes',
-        deliveryID: 12534,
-     
-    },
-    {
-        id: 7,
-        image: 'https://images.pexels.com/photos/2726111/pexels-photo-2726111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Jeff Bezos',
-        deliveryID: 12534,
-     
-    },
-    {
-        id: 8,
-        image: 'https://images.pexels.com/photos/697509/pexels-photo-697509.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'Serena Williams',
-        deliveryID: 12534,
-     
-    },
-    {
-        id: 9,
-        image: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        name:'James Cordon',
-        deliveryID: 12534,
-      
-    },
-    
-  ]
+
 
 export default function PendingDeliveriesHomepage() {
 
     const navigation = useNavigation()
+    // const deliveries = useContext(setAllDeliveries)
+    const userInfo = useSelector(selectUserInfo)
+    const allDeliveries = useSelector(selectAllDeliveries)
+    const dispatch = useDispatch()
 
 
 
-    
+    useEffect(()=>{
+        const fetchAllAgentsDeliveries=async()=>{
+
+            try {
+
+                const allDeliveries =    await axios.get(`https://ryder-app-production.up.railway.app/api/user/deliveries`, {
+                    headers: {
+                      "Authorization": `Bearer ${userInfo.token}`,
+                    },
+                  });
+        
+                //   console.log(allDeliveries.data.deliveries)
+                  dispatch(setAllDeliveries(allDeliveries.data.deliveries))
+            } catch (error) {
+                console.error(error)
+            }
+         
+        }
+
+
+        fetchAllAgentsDeliveries()
+    },[])
+
+    console.log(allDeliveries)
 
  
   return ( <SafeAreaView style={styles.pendingContainer}>
       
             <View style={{width:'100%', height:'25%', backgroundColor:'black'}}>
 
-                <Text style={{color:'white', paddingTop:50,paddingLeft:20, fontWeight:600,fontSize:18}}>Pending Deliveries</Text>
+                <Text style={{color:'white', paddingTop:50,paddingLeft:20, fontWeight:'bold',fontSize:18}}>Pending Deliveries</Text>
 
             </View>
 
             <View style={{height: '73%', marginTop:-50}}>
 
                 
-              <FlatList
-                  style={styles.content}
-                   data={data}
-                  keyExtractor={(item) => item.id}
-                // horizontal
-                 renderItem={({item})=>(
-                 <TouchableOpacity
-                      style={styles.item}
-                onPress={()=> navigation.navigate('PendingDeliveriesViewDetails', {item: item})}
-                  >
-                  <View style={{display:'flex',flexDirection:'row',alignItems:"center", justifyContent:"space-between",marginTop:10,marginLeft:20,marginRight:40}}>
-             
-               <Image
-                 style={{width: 70, height: 50, resizeMode:'cover', }}
-                source={{ uri: item.image}} 
-             />
-             <View style={{display:'flex', alignItems:"center", justifyContent:'space-between'}}>
-             <Text  style={{ fontSize:20, fontWeight:'bold',}} >{item.name}</Text>
-             <Text  >Delivery Id: {item.deliveryID}</Text>
-             </View>
+       {   allDeliveries.length 
+                 ?    <FlatList
+                                style={styles.content}
+                                data={allDeliveries}
+                                keyExtractor={(item) => item.id}
+                                // horizontal
+                                renderItem={({item})=>(
+                                <TouchableOpacity
+                                    style={styles.item}
+                                onPress={()=> navigation.navigate('PendingDeliveriesViewDetails', {item: item})}
+                                >
+                                <View style={{display:'flex',flexDirection:'row',alignItems:"center", justifyContent:"space-between",marginTop:10,marginLeft:20,marginRight:40}}>
+                            
+                            <Image
+                                style={{width: 70, height: 50, resizeMode:'cover', }}
+                                source={{ uri: item.img ? item.img : 'https://images.unsplash.com/photo-1674620213535-9b2a2553ef40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1064&q=80'}} 
+                            />
+                            <View style={{display:'flex', alignItems:"center", justifyContent:'space-between'}}>
+                            <Text  style={{ fontSize:20, fontWeight:'bold',}} >{item.parcelName}</Text>
+                            <Text  >Delivery Id: {item.id}</Text>
+                            </View>
 
-            </View>
+                            </View>
 
-           <TouchableOpacity style={{alignSelf:'flex-end', backgroundColor:'goldenrod',padding:5, borderRadius:5}} >
-            <Text>View Details</Text>
-           </TouchableOpacity>
-        </TouchableOpacity>
-    )}
-      />
+                        <TouchableOpacity style={{alignSelf:'flex-end', backgroundColor:'goldenrod',padding:5, borderRadius:5}} >
+                            <Text>View Details</Text>
+                        </TouchableOpacity>
+                        </TouchableOpacity>
+                                )}
+                                />
+                                :
+                                <View style={{display:'flex', alignItems:'center', justifyContent:'center',alignSelf:'center'}}> 
+
+                                <Image
+                                     style={{width: 300, height: 200, resizeMode:'cover',marginTop:70 }}
+                                     source={require('../assets/emptyPending.png')}
+                                 />
+                                 <Text style={{fontSize:20}}>No Pending Deliveries</Text>
+                    
+                           </View>
+                     }
 
 
 

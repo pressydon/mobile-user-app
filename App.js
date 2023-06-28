@@ -51,13 +51,74 @@ import { store } from './store';
 import { storeAuth } from './storeAuth';
 import Loader from './components/Loader';
 import { Constants } from 'expo';
+import ChatBoxGifted from './screens/ChatBoxGifted';
+import WalletScreen from './screens/WalletScreen';
 // this will only work if you specify the bundleIdentifier in app.json
 // let bundleId = Constants.manifest.ios.bundleIdentifier;
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 const Stack = createNativeStackNavigator();
 
 
 export default function App() {
+
+  // const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // useEffect(()=>{
+
+  //   const getData = async () => {
+  //     try {
+  //       const value = await AsyncStorage.getItem('token');
+  //       if (value !== null) {
+  //         setIsAuthenticated(!!value)
+  //       }
+  //     } catch (e) {
+  //       // error reading value
+  //     }
+  //   };
+
+  //   getData()
+
+  // })
+
+  // console.log('=-=',authToken)
+
+  //  const [users, setUsers] = useState([]);
+
+  // useEffect(() => {
+  //   fetchUsers();
+
+  //   const pusher = PusherService.initialize();
+
+  //   const channel = pusher.subscribe('users');
+  //   channel.bind('App\\Events\\UserUpdated', (data) => {
+  //     const updatedUser = data.user;
+  //     // Update the existing user or add the new user to the users state
+  //     setUsers((prevUsers) =>
+  //       prevUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
+  //     );
+  //   });
+
+  //   return () => {
+  //     pusher.unsubscribe('users');
+  //   };
+  // }, []);
+
+  // const fetchUsers = async () => {
+  //   try {
+  //     const response = await axios.get('https://ryder-app-production.up.railway.app/api/admin/alluser');
+  //     // const data = await response.json();
+  //     const data = await response.data;
+  //     setUsers(data.users);
+  //     console.log('pusher calling....')
+  //     // console.log(users)
+  //   } catch (error) {
+  //     console.log('Error fetching users:', error);
+  //   }
+  // };
+ 
+
   return (
     // <Provider store={storeAuth}>
     <Provider store={store}>
@@ -65,6 +126,8 @@ export default function App() {
       <SafeAreaProvider>
         
        <Stack.Navigator>
+
+        <>
 
        <Stack.Screen
           name="OnboardingLogo"
@@ -97,14 +160,7 @@ export default function App() {
             headerShown: false,
            }}
         /> 
-
-
-
-       {/* </Stack.Navigator> */}
-
     
-       {/* <Stack.Navigator> */}
-
         <Stack.Screen
           name="Signup"
           component={Signup}
@@ -143,9 +199,21 @@ export default function App() {
            }}
         />
 
+  </>
+
+  <>
+
       <Stack.Screen
           name="Homepage"
           component={Homepage}
+          options={{
+            headerShown: false,
+           }}
+        />
+
+      <Stack.Screen
+          name="WalletScreen"
+          component={WalletScreen}
           options={{
             headerShown: false,
            }}
@@ -348,10 +416,6 @@ export default function App() {
 
     />
 
-
-
-  
-
       <Stack.Screen
         name="Profile"
         component={Profile}
@@ -407,16 +471,23 @@ export default function App() {
         name="ChatBox"
         component={ChatBox}
         options={{
-          title: 'Chat With Admin',
+          title: 'Chat With Agent',
         }}
 
       />   
+      <Stack.Screen
+        name="ChatBoxGifted"
+        component={ChatBoxGifted}
+        options={{
+          title: 'Chat With Admin',
+        }}
 
+      />  
+
+</>
 
        </Stack.Navigator>  
                  
-    
-
 
       </SafeAreaProvider>
     </NavigationContainer>

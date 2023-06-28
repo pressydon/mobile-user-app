@@ -6,6 +6,9 @@ import { CheckBox, Card } from 'react-native-elements';
 import { useNavigation } from "@react-navigation/native";
 import React, { useRef } from 'react';
 import  { Paystack , paystackProps}  from 'react-native-paystack-webview';
+import { useDispatch, useSelector } from "react-redux";
+import { selectUserInfo } from "../slices/authSlice";
+import { selectDeliveryDetails } from "../slices/navSlice";
 
 
 export default PaymentOptions=()=>{
@@ -15,11 +18,45 @@ export default PaymentOptions=()=>{
 
     const paystackWebViewRef = useRef(paystackProps.payStackRef); 
 
+    const userInfo = useSelector(selectUserInfo)
+    const deliveryDetails = useSelector(selectDeliveryDetails)
+
+    console.log(deliveryDetails.data.amount)
+    console.log(userInfo.user.email)
+    console.log(userInfo.user.phoneNumber)
+    console.log(userInfo.user.name)
+
+    const dispatch = useDispatch()
+
+    // const submitRef=()=>{
+    //       const url = new URL(
+    //           "http://143.198.145.29/api/user/payment/verify"
+    //       );
+          
+    //       const headers = {
+    //           "Content-Type": "application/json",
+    //           "Accept": "application/json",
+    //           'Authorization': `Bearer ${userInfo.token}`,
+    //       };
+          
+    //       let body = {
+    //           "tx_ref": 'T043595021559182'
+    //       };
+    //         fetch(url, {
+    //           method: "POST",
+    //           headers,
+    //           // body: {"tx_ref": res.transactionRef.trxref},
+    //           body: JSON.stringify(body),
+    //       }).then(response => response.json())
+    //       .then(data => console.log(data))
+    //       .catch(err=>console.log(err.response))
+           
+    // }
+
+ 
 
 
     return(
-
-   
      
         <View style={{backgroundColor: 'white',height:'100%'}}>
             {/* checkout below */}
@@ -56,21 +93,50 @@ export default PaymentOptions=()=>{
 
             <Paystack
         paystackKey="pk_test_7ee4b93ca9487bbd5949b806e654cde8ff4ad3e7"
-        billingEmail="dimpreciouschinaza@gmail.com"
+        billingEmail={userInfo.user.email}
         paystackSecretKey= "sk_test_2cd3d51d922f0a43ccfa8fef6a3675720e44a555"
-        billingMobile="080334555"
-        billingName="Ice-riders"
+        billingMobile={userInfo.user.phoneNumber}
+        billingName={userInfo.user.name}
         ActivityIndicatorColor='yellow'
         currency="NGN"
-        amount={'25000.00'}
+        amount={deliveryDetails.data.amount}
         onCancel={(e) => {
-          // handle response here
+          console.log(e)
         }}
         onSuccess={(res) => {
-          // handle response here
+          console.log(res.transactionRef.trxref)
+        //  '143.198.145.29/api/user/payment/verify'
+          if(res.status === 'success'){
+            const url = new URL(
+              "http://143.198.145.29/api/user/payment/verify"
+          );
+          
+          const headers = {
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+              'Authorization': `Bearer ${userInfo.token}`,
+          };
+          
+          let body = {
+              "tx_ref": res.transactionRef.trxref,
+              "delivery_id": `${deliveryDetails.data.id}`
+          };
+            fetch(url, {
+              method: "POST",
+              headers,
+              // body: {"tx_ref": res.transactionRef.trxref},
+              body: JSON.stringify(body),
+          }).then(response => response.json())
+          .then(data => {
+            console.log('==----===',data)
+            navigation.navigate('InstantDeliveryArriving')
+          })
+          .catch(err=>console.log(err.response.data))
+          }
+       
         }}
         ref={paystackWebViewRef}
-      />
+      /> 
        {/* paystack end */}
             <View >
             
@@ -104,6 +170,7 @@ export default PaymentOptions=()=>{
            checkedColor="gold"
          />
 
+        
             </Card>
            
            <Card>
@@ -112,6 +179,7 @@ export default PaymentOptions=()=>{
             title='Pay with cash'
            checked={selectedIndex === 2}
            onPress={() => {setIndex(2), navigation.navigate('InstantDeliveryArriving')}}
+          // onPress={submitRef}
            checkedIcon="dot-circle-o"
            uncheckedIcon="circle-o"
            iconRight

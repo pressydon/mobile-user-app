@@ -9,12 +9,14 @@ import HomeCard from '../components/HomeCard';
 import HomeNavBottom from '../components/HomeNavBottom';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectDeliveryMedium, setDeliveryMedium, setDeliveryType, selectDeliveryType } from '../slices/navSlice';
+import { selectUserInfo } from '../slices/authSlice';
 
 const BadgedIcon = withBadge(15)(Icon);
 
 export default function Homepage() {
 
     const navigation = useNavigation()
+    const userInfo = useSelector(selectUserInfo)
 
     const [selectInstant, setSelectInstant] = useState()
     const [selectSchedule, setSelectSchedule] = useState()
@@ -59,9 +61,9 @@ export default function Homepage() {
             setIsShedText(styles.schedTextActive)
             setSelectInstant(true)
             setSelectSchedule(false)
-            setDeliveryType('Instant')
+            setDeliveryType('instant')
             // dispatch(setDeliveryMedium(car))
-            dispatch(setDeliveryType('Instant'))
+            dispatch(setDeliveryType('instant'))
         }
     
       const  schedulePress =()=>{
@@ -73,8 +75,8 @@ export default function Homepage() {
             setIsShedText(styles.schedText)
             setSelectInstant(false)
             setSelectSchedule(true)
-            setDeliveryType('Scheduled')
-            dispatch(setDeliveryType('Scheduled'))
+            setDeliveryType('scheduled')
+            dispatch(setDeliveryType('scheduled'))
         }
 
         const bikePress=()=>{
@@ -123,7 +125,8 @@ export default function Homepage() {
 
     
    console.log(deliveryMedium)
-   console.log(deliveryType)
+   console.log(userInfo)
+   
 
  
   return ( <SafeAreaView style={styles.homeContainer}>

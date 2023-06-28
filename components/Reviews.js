@@ -17,7 +17,7 @@ export default Reviews=()=>{
             />
             </View>
             <View style={{marginLeft:40, marginTop:10}}>
-            <Text style={{color:'black', fontWeight:500,padding:5}}>Stephen Asemota</Text>
+            <Text style={{color:'black', fontWeight:'bold',padding:5}}>Stephen Asemota</Text>
             <Text style={{color:'black',padding:5}}>was an excellent delivery agent</Text>
             </View>
             <View style={{margin:10, display:'flex', justifyContent: 'space-between', borderRadius:20,gap:30}}>

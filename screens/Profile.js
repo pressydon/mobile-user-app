@@ -7,28 +7,118 @@ import HomeNavBottom from '../components/HomeNavBottom';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import UploadImage from '../components/UploadImage';
 import { KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view'
+import { selectUserInfo, setUserInfo } from '../slices/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import axios from 'axios';
+import Loader from '../components/Loader';
 
 
 export default function Profile() {
 
-    const [email, setEmail] = useState("");
+    // const [email, setEmail] = useState("");
     const [fullName, setFullName] = useState("");
     const [phoneNumber, setPhoneNumber] = useState("");
-
+    const [eachUserDeliveries, setEachUserDeliveries] = useState([])
     const navigation = useNavigation()
+    const [totalInstant, setTotalInstant] = useState(0)
+    const [totalScheduled, setTotalScheduled] = useState(0)
+    const [totalCancelled, setTotalCancelled] = useState(0)
+    const [loading, setLoading] = useState(false)
+    const userInfo = useSelector(selectUserInfo)
+    const dispatch = useDispatch()
+
+    let pushedArray = []
+    let filteredInstant =[];
+    let filteredScheduled = [];
+    let filteredCancelled = [];
 
     const createTwoButtonAlert = () =>
-    Alert.alert('Confirm Phone number', 'We would be verifying this phone number 08067658765 please confirm the number is okay or would you like to edit the number?', [
+    Alert.alert('Confirm Phone number', `We would be verifying this phone number ${phoneNumber} please confirm the number is okay or would you like to edit the number?`, [
       {
         text: 'Edit number',
         onPress: () => console.log('Cancel Pressed'),
         style: 'cancel',
       },
-      {text: 'Okay', onPress: () => console.log('proceed'),},
+      {text: 'Okay', onPress: saveAndUpdate},
     ]);
 
+    useEffect(()=>{
 
+      const fetchUser=async()=>{
+
+        setLoading(true)
+
+        try {
+
+          const getUser =  await axios.get(`https://ryder-app-production.up.railway.app/api/user`, {
+            headers: {
+              Authorization: `Bearer ${userInfo.token}`,
+            },
+          })
+
+          // console.log('---===---',getUser.data[1][0].deliveries)
+
+          setEachUserDeliveries(getUser.data[1][0].deliveries)
+
+        
+          setLoading(false)
+        } catch (error) {
+          console.log(error.response)
+        }
+
+      }
+
+      fetchUser()
+
+      eachUserDeliveries.map(userDelivery=>{
+
+        // console.log(userDelivery.deliveryType)
+        if(userDelivery.deliveryType == 'instant'){
+        //  const  pushedArrayInstant = pushedArray.push(userDelivery)
+          setTotalInstant(prev=>prev + 1)
+          // setTotalInstant(totalInstant + 1)
+          // console.log('----===-----',pushedArrayInstant.length)
+        } else if(userDelivery.deliveryType == 'scheduled'){
+          setTotalScheduled(prev=>prev + 1)
+          // setTotalScheduled(totalScheduled + 1)
+          console.log('======',totalScheduled)
+        } else if(userDelivery.status == 'cancelled') {
+            setTotalCancelled(prev=> prev + 1)
+        }
+      })
+
+      // filteredInstant = eachUserDeliveries.filter(del=> del.deliveryType == 'instant')
+      //   console.log('===================',filteredInstant.length)
+
+      //   filteredScheduled = eachUserDeliveries.filter(del=> del.deliveryType == 'scheduled')
+      //   console.log('===================',filteredScheduled.length)
+    }, [])
+
+    // console.log('+++++++',eachUserDeliveries)
+
+  
+  //  console.log(userInfo)
    
+    const saveAndUpdate=async()=>{
+
+      console.log('called update')
+      setLoading(true)
+      try {
+        let reqOptions = {
+          url: `https://ryder-app-production.up.railway.app/api/user/${userInfo.user.id}?name=${fullName}&phoneNumber=${phoneNumber}`,
+          method: "PUT",
+          headers: headersList,
+        }
+
+        let response = await axios.request(reqOptions);
+        console.log(response.data.data);
+        // dispatch(setUserInfo(response.data.data))
+        setLoading(false)
+
+      } catch (error) {
+        console.error(error)
+      }
+    }
 
  
   return ( 
@@ -59,7 +149,7 @@ export default function Profile() {
         
             
 
-        <Text style={{color:'white', fontWeight:600,fontSize:20}}>My Account</Text>
+        <Text style={{color:'white', fontWeight:'bold',fontSize:20}}>My Account</Text>
 
         <Icon
             onPress={() => navigation.navigate('ProfileSettings')}
@@ -122,7 +212,7 @@ export default function Profile() {
                     />
                
                 </View>
-                <Text style={{textAlign:'center',marginTop:5}}>126 Instant deliveries</Text>
+                <Text style={{textAlign:'center',marginTop:5}}>{totalInstant} Instant deliveries</Text>
             </View>
 
             <View style={{width:100,alignSelf:'center'}}>
@@ -133,7 +223,7 @@ export default function Profile() {
                 source={require('../assets/calender.png')}
                 />
                   </View>
-                  <Text style={{textAlign:'center',marginTop:5}}>17 Scheduled deliveries</Text>
+                  <Text style={{textAlign:'center',marginTop:5}}>{totalScheduled} Scheduled deliveries</Text>
             </View>
 
             <View style={{width:100,marginRight:40,alignSelf:'center'}}>
@@ -147,17 +237,17 @@ export default function Profile() {
                         />
                 </View>
          
-                <Text style={{textAlign:'center',marginTop:5}}>20 Cancelled rides</Text>
+                <Text style={{textAlign:'center',marginTop:5}}>{totalCancelled} Cancelled rides</Text>
             </View>
 
           </View>
 
 
 
-          <View style={{height:140, width:'70%',backgroundColor:'goldenrod',alignSelf:'center',marginTop:20,borderRadius:5, display:'flex',alignItems:'center',justifyContent:'center', gap:5,padding:20}}>
+          <TouchableOpacity onPress={()=>navigation.navigate('WalletScreen')} style={{height:140, width:'70%',backgroundColor:'goldenrod',alignSelf:'center',marginTop:20,borderRadius:5, display:'flex',alignItems:'center',justifyContent:'center', gap:5,padding:20}}>
 
-            <Text style={{fontSize:15,fontWeight:300}}>Wallet Balance</Text>
-            <Text style={{fontSize:20,fontWeight:600}}>N2000.00</Text>
+            <Text style={{fontSize:15,fontWeight:'normal'}}>Wallet Balance</Text>
+            <Text style={{fontSize:20,fontWeight:'bold'}}>N2000.00</Text>
             <View style={{backgroundColor:'yellow',alignSelf:'center',borderRadius:5, display:'flex',flexDirection:'row',alignItems:'center',padding:5,alignSelf:'center',gap:10}}>
            
             <Icon
@@ -170,7 +260,7 @@ export default function Profile() {
              
 
             </View>
-          </View>
+          </TouchableOpacity>
 
 
 
@@ -178,8 +268,8 @@ export default function Profile() {
 
     <TextInput
                     style={styles.input}
-                    placeholder="Enter Full Name"
-                    autoCapitalize="none"
+                    placeholder={userInfo.user.name}
+                    autoCapitalize="words"
                     textContentType="name"
                     autoFocus={true}
                     value={fullName}
@@ -187,14 +277,13 @@ export default function Profile() {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Enter Email"
+                    placeholder={userInfo.user.email}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    secureTextEntry={true}
+                    editable={false}
                     textContentType="emailAddress"
                     keyboardType="email-address"
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
+                   
                 />
                 <View style={{display: 'flex',flexDirection: 'row', justifyContent: 'center', alignItems: 'center',backgroundColor: "#F6F7FB",height:45,  width: '80%', borderRadius: 10,}}>
                     <Image
@@ -205,10 +294,9 @@ export default function Profile() {
                   <View style={{height: '100%',width:2, backgroundColor:'lightgray', marginRight: 5}}></View>
                    <TextInput
                     style={{width:'90%'}}
-                    placeholder="Enter Phone Number"
+                    placeholder={userInfo.user.phoneNumber}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    secureTextEntry={true}
                     textContentType="telephoneNumber"
                     value={phoneNumber}
                     onChangeText={(text) => setPhoneNumber(text)}
@@ -218,7 +306,7 @@ export default function Profile() {
 
 
                 <TouchableOpacity
-                onPress={createTwoButtonAlert}
+                onPress={saveAndUpdate}
                 style={styles.button} >
                      <Text style={{ color: 'black', fontSize: 18}}> Save and Update</Text>
                  </TouchableOpacity>
@@ -234,7 +322,7 @@ export default function Profile() {
         </View>
 
            
-      
+      {loading ? <Loader /> : null}
         
     </SafeAreaView>
     </KeyboardAwareScrollView>

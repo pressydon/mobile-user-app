@@ -12,6 +12,8 @@ import { selectUserInfo } from "../slices/authSlice";
 import axios from 'axios'
 import {useDispatch} from 'react-redux'
 import * as ImagePicker from 'expo-image-picker';
+import Loader from "../components/Loader";
+import moment from "moment";
 
 const data = [
   { label: 'Fragile', value: 'fragile' },
@@ -43,18 +45,19 @@ export default ScheduleDeliveryInput=()=>{
 
 
   const [pickupDate, setPickupDate] = useState('')
-
+  const [errorMessage, setErrorMessage] = useState('')
   const deliveryMedium = useSelector(selectDeliveryMedium)
   const deliveryType = useSelector(selectDeliveryType)
   const origin = useSelector(selectOrigin)
   const destination = useSelector(selectDestination)
-  
+  const [loading, setLoading] = useState(false)
   const userInfo = useSelector(selectUserInfo)
 
   const dispatch = useDispatch()
   const [fillInDetails, setFillInDetails] = useState(false)
   console.log(deliveryMedium.amount)
-   
+   const [dbDate, setDBDate] = useState('')
+   const [dbTime, setDBTime] = useState('')
 
     const [images, setImages] = useState([])
     const travelTimeInformation = useSelector(selectTravelTimeInformation)
@@ -98,7 +101,19 @@ export default ScheduleDeliveryInput=()=>{
      setShowDate(date.toLocaleDateString())
       setShowTime(date.toLocaleTimeString());
 
+      const formattedDate = moment(date).format('YYYY/MM/DD');
+      // console.log('-----',date.toLocaleTimeString())
+      setDBDate(formattedDate)
+      const formattedTime = moment(date).format('HH:mm:ss');
+      
+
+      console.log('---',formattedTime)
+      setDBTime(formattedTime)
+
+      // console.log('-----------',date)
       hideDatePicker();
+     
+
      
       
       setRemoveButton(true)
@@ -123,14 +138,13 @@ export default ScheduleDeliveryInput=()=>{
 
     const clickOnNext = ()=>{
    
-          if(!sendersName || !sendersPhoneNumber || !receiversName || !receiversPhoneNumber || !parcelName || !parcelDesc || !deliveryInstruction || !value  ){
+          if(!sendersName || !sendersPhoneNumber || !receiversName || !receiversPhoneNumber || !parcelName || !deliveryInstruction || !value  ){
             setFillInDetails(true)
             return
           } 
           
             handleDeliveryInput()
            
-          // console.log(sendersName,sendersPhoneNumber,receiversName,receiversPhoneNumber, value, parcelDesc, deliveryInstruction, images)
         }
     
     
@@ -151,12 +165,11 @@ export default ScheduleDeliveryInput=()=>{
     formdata.append("pickup_lat", origin.location.lat);
     formdata.append("pickup_long", origin.location.lng);
     formdata.append("amount", amountForDelivery);
-    // formdata.append("pickup_date", showDate);
-    // formdata.append("pickup_time", showTime);
+    formdata.append("pickup_date", dbDate);
+    formdata.append("pickup_time", dbTime);
 
-    // useEffect(()=>{
 
-      images.forEach((image,index) =>{
+      images?.forEach((image,index) =>{
         formdata.append("images[]",{
           uri: image.uri,
           name: image.fileName,
@@ -164,13 +177,11 @@ export default ScheduleDeliveryInput=()=>{
        } )
      })
 
-    // }, [images.length])
-   
 
+   
+ console.log(showTime)
+ console.log(dbDate)
     
-    // console.log(img.uri)
-    // console.log(licenseFront.uri)
-    // // console.log(bodyContent)
     
     let reqOptions = {
       url:'https://ryder-app-production.up.railway.app/api/user/delivery',
@@ -182,45 +193,36 @@ export default ScheduleDeliveryInput=()=>{
       data: formdata,
     }
     
+    
 
     
         const handleDeliveryInput =async()=>{
     
-          // setLoading(true)
+          setLoading(true)
        try {
        
      let eachDelivery = await axios.request(reqOptions);
      console.log(eachDelivery.data);
     
          dispatch(setDeliveryDetails(eachDelivery.data))
-        //  setLoading(false)
+      
         
         navigation.navigate('Schedule Delivery Summary')
-         
+            setLoading(false)
     
        } catch (error) {
-        console.error(error)
-        //  if(error.response.status !== 500 ){
-           
-        //              if(error.response.data.errors.email){
-        //                console.log(error.response.data.errors.email[0])
-        //                setErrorMessage(error.response.data.errors.email[0])
-        //              } else if (error.response.data.errors.password){
-        //                setErrorMessage(error.response.data.errors.password[0])
-        //              console.log(error.response.data.errors.password[0])
-                     
-        //              }
-    
-        //    setFeedbackMessage('')
-      
-        //  } 
-        //   else {
-        //    setErrorMessage('')
-        //  }
+        console.error(error.response.data)
+           setLoading(false)
+        if (error.response) {
+          setErrorMessage('An error occurred during pairing. Please check your Network provider and try again.');
+        }
+
        }
        
      }
   
+
+
   
 
   return(
@@ -229,13 +231,11 @@ export default ScheduleDeliveryInput=()=>{
       <Checkout />
 
       <View style={{margin:20}}>
-      {fillInDetails &&  <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:170, fontSize:15}}>Fill in all delivery details</Text>}
 
           <Text>Senders Name*</Text>
           <TextInput
                   style={styles.input}
-                  // placeholder="Drop off location"
-                  autoCapitalize="none"
+                  autoCapitalize="words"
                   autoCorrect={false}
                   textContentType="addressCityAndState"
                   onFocus={()=>{setFillInDetails(false)}}
@@ -252,7 +252,6 @@ export default ScheduleDeliveryInput=()=>{
                 <View style={{height: '100%',width:2, backgroundColor:'lightgray', marginRight: 5}}></View>
                  <TextInput
                   style={{width:'90%'}}
-                  // placeholder="Enter Phone Number"
                   autoCapitalize="none"
                   autoCorrect={false}
                   onFocus={()=>{setFillInDetails(false)}}
@@ -266,7 +265,7 @@ export default ScheduleDeliveryInput=()=>{
           <Text  style={{ marginTop: 20}}>Receivers Name*</Text>
           <TextInput
                   style={styles.input}
-                  autoCapitalize="none"
+                  autoCapitalize="words"
                   autoCorrect={false}
                   textContentType="name"
                   onFocus={()=>{setFillInDetails(false)}}
@@ -325,17 +324,16 @@ export default ScheduleDeliveryInput=()=>{
               )}
           />
 
-          <Text  style={{ marginTop: 20}}>Parcel Description</Text>
+          {/* <Text  style={{ marginTop: 20}}>Parcel Description</Text>
           <TextInput
                   style={styles.inputTwo}
-                  // placeholder="Parcel Description"
                   autoCapitalize="none"
                   textContentType="name"
                   multiline={true}
                   onFocus={()=>{setFillInDetails(false)}}
                   value={parcelDesc}
                   onChangeText={(text) => setParcelDesc(text)}
-              />
+              /> */}
                <Text  style={{ marginTop: 20}}>Delivery Instructions</Text>
                  <TextInput
                   style={styles.inputThree}
@@ -385,7 +383,7 @@ export default ScheduleDeliveryInput=()=>{
 
                   
 
-              <Text style={{ marginTop: 20}}>*Add images of your parcel</Text>
+              <Text style={{ marginTop: 20}}>Add images of your parcel (optional)</Text>
 
                <Icon
                onPress={addImage}
@@ -420,10 +418,12 @@ export default ScheduleDeliveryInput=()=>{
 
               </View>
 
-              <Text  style={{ marginTop: 20}}>Maximum of 2 images are allowed</Text>
+              <Text  style={{ marginTop: 20}}>Maximum of 2 images are allowed (Images must not be more than 1.9mb)</Text>
 
               <Text  style={{ marginTop: 20, marginRight: 14}}>N/B: The closest available BIKE delivery agent would receive and confirm your request after which you’ll be directed to the payment page.</Text>
-              
+              {fillInDetails &&  <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:230,padding:5, fontSize:15}}>Fill in all delivery details</Text>}
+                {errorMessage ? <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:280, padding:5,  fontSize:13}}>{errorMessage}</Text> : null}
+                {loading ? <Loader loadingText='wait while we pair you with an available agent around your pickup location' /> : null}
               <TouchableOpacity
               onPress={clickOnNext}
                style={styles.button} >

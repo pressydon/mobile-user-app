@@ -3,14 +3,82 @@ import { View, Text, Image, SafeAreaView, StyleSheet, TouchableOpacity } from "r
 import { Icon } from 'react-native-elements';
 import tw from 'tailwind-react-native-classnames';
 import Reviews from "../components/Reviews";
+import { useDispatch, useSelector } from "react-redux";
+import { selectUserInfo } from "../slices/authSlice";
+import { selectDeliveryDetails } from "../slices/navSlice";
+import axios from "axios";
+import Loader from '../components/Loader'
+import { useState } from "react";
 
 
 
 export default ChooseDeliveryAgentFromAgents=()=>{
 
     const navigation =useNavigation()
+    const userInfo = useSelector(selectUserInfo)
+    const deliveryDetails = useSelector(selectDeliveryDetails)
+    const [loading, setLoading] = useState(false)
+    const dispatch = useDispatch()
 
     const route = useRoute()
+
+    let headersList = {
+        "Accept": "/",
+        "Authorization": `Bearer ${userInfo.token}`
+       }
+  
+
+      const handleAdminSchedule =async()=>{
+            setLoading(true)
+        try {
+          const { data } = await axios({
+              method: 'put',
+              url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}`,
+              data: {
+                  deliveryType: 'admin',
+              },
+              headers:headersList
+          });
+          console.log('------deliveryType update',data);
+            navigation.navigate('Payment Options')
+
+            setLoading(false)
+      } catch (err) {
+        console.log(err.response)
+          // if (err.response.status === 404) {
+          //     console.log('Resource could not be found!');
+          // } else {
+          //     console.log(err.message);
+          // }
+      }
+      }
+  
+      const handleSchedule =async()=>{
+
+        setLoading(true)
+          try {
+            const { data } = await axios({
+                method: 'put',
+                url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}`,
+                data: {
+                    initialMatch: route.params.item.driver_id,
+                },
+                headers:headersList
+            });
+        
+            console.log('------schedule update',data);
+              navigation.navigate('Payment Options')
+
+              setLoading(false)
+        } catch (err) {
+          console.log(err.response)
+            // if (err.response.status === 404) {
+            //     console.log('Resource could not be found!');
+            // } else {
+            //     console.log(err.message);
+            // }
+        }
+        }
 
     return(
         <View>
@@ -27,16 +95,17 @@ export default ChooseDeliveryAgentFromAgents=()=>{
             <Image
                 style={{width:118,height:118, borderRadius: 50}}
                 resizeMode="cover"
-                source={{ uri: route.params.item.image}} 
+                source={{ uri: route.params.item.img ? route.params.item.img  :  'https://www.pngfind.com/pngs/m/610-6104451_image-placeholder-png-user-profile-placeholder-image-png.png'}} 
              />
 
              <View >
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Delivery Agent : {route.params.item.name}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Vehicle Type : {route.params.item.vehicleType} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Vehicle Color : Red</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Agent ID: 6789</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Plate no : LAG564OS</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Phone no : 08067919787</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Agent : {route.params.item.name}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Vehicle Type : {route.params.item.vehicleType} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Vehicle Color : Red</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>delivery medium: {route.params.item.medium}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Agent ID: {route.params.item.driver_id}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Plate no : LAG564OS</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Phone no : {route.params.item.phoneNumber}</Text>
              </View>
 
             </View>
@@ -62,7 +131,7 @@ export default ChooseDeliveryAgentFromAgents=()=>{
                 </View>
             </View>
 
-            <View style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+            {/* <View style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
 
             <Image
                 style={{width:80,height:80, borderRadius: 15}}
@@ -85,20 +154,22 @@ export default ChooseDeliveryAgentFromAgents=()=>{
                 source={require('../assets/chooseImage4.png')}
              />
 
-            </View>
+            </View> */}
 
             <TouchableOpacity
-                onPress={() => navigation.navigate('Payment Options')}
+                onPress={handleSchedule}
                  style={styles.button} >
                      <Text style={{fontWeight: 'bold', color: 'black', fontSize: 14}}>Continue with this agent</Text>
                  </TouchableOpacity>
 
                  <View style={{width:'80%', height:0.2, backgroundColor:'black',alignSelf:'center'}}></View>
 
-            <Text style={{margin:10, fontWeight:500}}>Reviews</Text>
+            {/* <Text style={{margin:10, fontWeight:'bold'}}>Reviews</Text> */}
 
-            <Reviews />
-            <Reviews />
+            {/* <Reviews />
+            <Reviews /> */}
+
+            {loading ? <Loader /> : null}
 
             <View style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
             <TouchableOpacity
@@ -108,7 +179,7 @@ export default ChooseDeliveryAgentFromAgents=()=>{
                  </TouchableOpacity>
 
                  <TouchableOpacity
-                onPress={() => navigation.navigate('Payment Options')}
+                onPress={handleAdminSchedule}
                  style={styles.buttonCall} >
                      <Text style={{fontWeight: 'bold', color: 'black', fontSize: 12}}>Schedule with admin</Text>
                  </TouchableOpacity>

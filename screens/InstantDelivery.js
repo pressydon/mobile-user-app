@@ -45,7 +45,7 @@ export default InstantDelivery=({route})=>{
     useEffect(()=>{
 
 
-      if(!origin && !destination){
+      if(!origin || !destination){
         setProceed(false)
         console.log('no origin')
       }else{
@@ -146,6 +146,7 @@ export default InstantDelivery=({route})=>{
               }}
                 // listViewDisplayed='auto'
                 // isFocused={()=>console.log('is focused')}
+                isFocused={()=>setProceed(false)}
                 placeholder="Drop off location"
                 onPress={((data, details = null)=>{
                   dispatch(setDestination({
@@ -216,7 +217,7 @@ export default InstantDelivery=({route})=>{
         </View>
 
        {proceed &&  <TouchableOpacity
-                onPress={() =>{ deliveryType === 'Scheduled' ? navigation.navigate('ScheduleDeliveryInput') : navigation.navigate('InstantDeliveryInput')}}
+                onPress={() =>{ deliveryType === 'scheduled' ? navigation.navigate('ScheduleDeliveryInput') : navigation.navigate('InstantDeliveryInput')}}
                  style={styles.button} >
                      <Text style={{fontWeight: 'bold', color: 'black', fontSize: 18}}>Continue</Text>
                  </TouchableOpacity>}
@@ -251,6 +252,7 @@ const styles = StyleSheet.create({
     color: 'black',
     alignSelf: 'center',
     marginBottom:20,
+    zIndex:1
     
   },
 

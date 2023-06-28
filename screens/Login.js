@@ -7,6 +7,7 @@ import axios from 'axios';
 import {useDispatch} from 'react-redux'
 import {  setAuthLoading,  setUserInfo,setAuthError, setAuthSuccess } from "../slices/authSlice";
 import Loader from '../components/Loader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Login() {
 
@@ -26,7 +27,29 @@ export default function Login() {
 
     const [editPassword, setEditPassword] = useState(false)
     const [fillInDetails, setFillInDetails] = useState(false)
+    const [loading, setLoading] = useState(false)
 
+
+    const [authToken, setAuthToken] = useState('')
+
+    // useEffect(()=>{
+  
+    //   const getData = async () => {
+    //     try {
+    //       const value = await AsyncStorage.getItem('token');
+    //       if (value !== null) {
+    //         setAuthToken(value)
+    //       }
+    //     } catch (e) {
+    //       // error reading value
+    //     }
+    //   };
+  
+    //   getData()
+  
+    // })
+  
+    console.log('=-=',authToken)
 
   
     
@@ -37,35 +60,46 @@ export default function Login() {
         //   return
         // }
     console.log(email, password)
-          //  setLoading(true)
+           setLoading(true)
         try {
           // console.log(postData)
         
         const loggedInUser =  await axios.post(`https://ryder-app-production.up.railway.app/api/user/login?email=${email}&password=${password}`);
           dispatch(setUserInfo(loggedInUser.data))
-          // setLoading(false)
-          // console.log(loggedInUser.data.message)
+        
+          console.log(loggedInUser.data.token)
           setLogginMessage(loggedInUser.message)
           setShowMessage(true)
-         navigation.navigate('VerifyToken')
-       
-          
+          navigation.navigate('VerifyToken')
+          console.log(loggedInUser.data)
+          // await AsyncStorage.setItem('token', loggedInUser.data.token)
+          setLoading(false)
           
         } catch (error) {
 
+          setModalVisible(false)
+          setLoading(false)
+          console.log(error.response.data)
+          if (error.response && error.response.data && error.response.data.errors?.email) {
+            setErrorMessage('The selected email is invalid.');
+            console.log(errorMessage)
+          }else {
+          
+            setErrorMessage('An error occurred during login. Please check your password and try again.');
+          }
          
-   if(error.response.status !== 500 ){
-    setLogginMessage(error.response.data.message)
-              //  console.log(error.response.data.errors.email[0])
-              //  setErrorMessage(error.response.data.errors.email[0])
+//    if(error.response.status !== 500 ){
+//     setLogginMessage(error.response.data.message)
+//               //  console.log(error.response.data.errors.email[0])
+//               //  setErrorMessage(error.response.data.errors.email[0])
 
-  setFeedbackMessage('')
-  setModalVisible(!modalVisible)
-} 
- else {
-  setErrorMessage('')
+//   setFeedbackMessage('')
+//   setModalVisible(!modalVisible)
+// } 
+//  else {
+//   setErrorMessage('')
  
-}
+// }
         }
         
       }
@@ -80,7 +114,7 @@ export default function Login() {
         <Text style={{color:'red', textAlign:'center', fontWeight:'bold'}}>{logginMessage}</Text>
     
     <View style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-    <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:170, fontSize:15}}>{errorMessage}</Text>
+   {errorMessage ? <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:230, fontSize:15}}>{errorMessage}</Text> : null}
     {fillInDetails &&  <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:170, fontSize:15}}>Fill in complete details</Text>}
     {/* <View style={{display: 'flex',flexDirection: 'row', justifyContent: 'center', alignItems: 'center',backgroundColor: "#F6F7FB",height:45,  width: '80%', borderRadius: 10,}}>
                     <Image
@@ -170,7 +204,7 @@ export default function Login() {
                     </View>
                 </Modal> */}
 
-
+                {loading ? <Loader loadingText='logging in...'/> : null}
 
                 <TouchableOpacity
                  onPress={handleLogin}

@@ -1,12 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { Modal,Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal,Image, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, Dimensions, ScrollView } from 'react-native';
 import tw from 'tailwind-react-native-classnames';
 import { Icon,} from 'react-native-elements'
 import axios from 'axios';
 import {useDispatch} from 'react-redux'
 import {  setAuthLoading,  setUserInfo,setAuthError, setAuthSuccess } from "../slices/authSlice";
 import Loader from '../components/Loader';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 export default function Signup() {
 
@@ -66,17 +67,18 @@ const clickOnSignup = ()=>{
     try {
       // console.log(postData)
     
-    const eachUser =  await axios.post(`https://ryder-app-production.up.railway.app/api/user/register?name=${fullName}&email=${email}&password=${password}`);
+    const eachUser =  await axios.post(`https://ryder-app-production.up.railway.app/api/user/register?name=${fullName}&email=${email}&password=${password}&phoneNumber=${phoneNumber}`);
       dispatch(setUserInfo(eachUser.data))
-      setLoading(false)
       console.log(eachUser.data)
      navigation.navigate('VerifyToken')
+     setLoading(false)
      setModalVisible(false)
+    
       
       
 
     } catch (error) {
-      console.error(error.response.data)
+      console.error(error.response)
       if(error.response.status !== 500 ){
         
                   if(error.response.data.errors.email){
@@ -99,8 +101,25 @@ const clickOnSignup = ()=>{
   }
 
   return (
-    <SafeAreaView style={styles.signupContainer}>
-   {loading &&   <Loader />}
+
+    <KeyboardAwareScrollView
+    nestedScrollEnabled={true}
+    keyboardShouldPersistTaps='handled'
+    horizontal={true}
+    extraHeight={120}
+    style={{
+      
+      height: Dimensions.get("window").height,
+      width: Dimensions.get("window").width,
+    }}>
+<ScrollView>
+   
+    <SafeAreaView style={{height: Dimensions.get("window").height * 1.2,
+        backgroundColor: "lightgrey",
+        width: Dimensions.get("window").width,
+        backgroundColor: 'white',
+        overflow: 'scroll' }}>
+   {/* {loading &&   <Loader loadingText="signing up..." />} */}
         <Text style={styles.signupTitle}>Sign up</Text>
         <Text style={[tw`pl-8 `, {fontSize: 20, fontWeight: 'bold', width: 150}]}>Welcome,</Text>
         <Text style={[tw`pl-8  `, {fontSize: 20, fontWeight: 'bold', width: 300, marginBottom: 40}]}>Let's get started</Text>
@@ -112,8 +131,9 @@ const clickOnSignup = ()=>{
             <TextInput
                     style={styles.input}
                     placeholder="Enter Full Name"
-                    autoCapitalize="none"
+                    autoCapitalize="words"
                     textContentType="name"
+                 
                     autoFocus={true}
                     value={fullName}
                     onFocus={()=>{setEditPassword(false), setFillInDetails(false)}}
@@ -195,10 +215,10 @@ const clickOnSignup = ()=>{
                                 type='antdesign'
                                 size={20}
                                 />
-                        <TouchableOpacity    onPress={() =>{ navigation.navigate('VerifyToken'),setModalVisible(!modalVisible)}} style={styles.button} >
+                        {/* <TouchableOpacity    onPress={() =>{ navigation.navigate('VerifyToken'),setModalVisible(!modalVisible)}} style={styles.button} >
                       
                         <Text style={styles.modalText}>Send token to Phone Number</Text>
-                        </TouchableOpacity>
+                        </TouchableOpacity> */}
 
                         <TouchableOpacity  onPress={handleSignUp} style={[styles.button , {marginTop:10}]}>
 
@@ -213,7 +233,7 @@ const clickOnSignup = ()=>{
                     </View>
                 </Modal>
 
-
+                { loading ? <Loader /> : null }
                 <TouchableOpacity
                  onPress={clickOnSignup}
                 style={styles.button} >
@@ -234,6 +254,10 @@ const clickOnSignup = ()=>{
       
         
     </SafeAreaView>
+
+    </ScrollView>
+    
+    </KeyboardAwareScrollView>
      ) ;
 }
 
@@ -279,7 +303,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width:300,
-    height:250,
+    height:200,
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,

@@ -1,7 +1,7 @@
-import {KeyboardAvoidingView,Keyboard, Dimensions, View,Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Platform } from "react-native"
+import {KeyboardAvoidingView,Keyboard, Dimensions, View,Text, TextInput, StyleSheet, Image, ScrollView, TouchableOpacity, Platform, Modal, Alert } from "react-native"
 import Checkout from "../components/Checkout"
 import tw from 'tailwind-react-native-classnames';
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dropdown } from 'react-native-element-dropdown';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { Icon } from 'react-native-elements';
@@ -15,6 +15,8 @@ import { selectDeliveryMedium, selectDeliveryType, selectDestination, selectOrig
 import { selectUserInfo } from "../slices/authSlice";
 import axios from 'axios'
 import {useDispatch} from 'react-redux'
+import Loader from "../components/Loader";
+// import useFetch from "../hooks/useFetch";
 
 const data = [
     { label: 'Fragile', value: 'fragile' },
@@ -31,15 +33,16 @@ export default InstantDeliveryInput=()=>{
   const [sendersName, setSendersName] = useState('')
   const [receiversName, setReceiversName] = useState('')
   const [parcelName, setParcelName] = useState('')
-  const [parcelDesc, setParcelDesc] = useState('')
   const [deliveryInstruction, setDeliveryInstruction] = useState('')
-
+  const [errorMessage, setErrorMessage] = useState('')
   const deliveryMedium = useSelector(selectDeliveryMedium)
   const deliveryType = useSelector(selectDeliveryType)
   const origin = useSelector(selectOrigin)
   const destination = useSelector(selectDestination)
-  
+  const [loading, setLoading] = useState(false)
   const userInfo = useSelector(selectUserInfo)
+  const deliveryDetails = useSelector(selectDeliveryDetails)
+  const [matchedData, setMatchedData] = useState([])
 
   const dispatch = useDispatch()
   const [fillInDetails, setFillInDetails] = useState(false)
@@ -47,10 +50,14 @@ export default InstantDeliveryInput=()=>{
     const navigation = useNavigation()
 
     const [value, setValue] = useState(null);
-
+    const [modalVisible, setModalVisible] = useState(false);
     const [images, setImages] = useState([])
     const travelTimeInformation = useSelector(selectTravelTimeInformation)
+    
+    // const [matchedData, setMatchedData] = useState([]);
+    // const [loading, setLoading] = useState(false);
 
+    // const {data: dataOne,} = useFetch(`https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.id}/${deliveryDetails.locations[0].driver_id}`)
   //  console.log(travelTimeInformation)
   //  console.log(deliveryMedium.amount)
   // console.log(userInfo.token)
@@ -61,7 +68,7 @@ export default InstantDeliveryInput=()=>{
       let _image = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsMultipleSelection: true,
-          selectionLimit:5,
+          selectionLimit:2,
           // allowsEditing: true,
           aspect: [4,3],
           quality: 1,
@@ -79,11 +86,11 @@ export default InstantDeliveryInput=()=>{
 
     const clickOnNext = ()=>{
    
-          if(!sendersName || !sendersPhoneNumber || !receiversName || !receiversPhoneNumber || !parcelName || !parcelDesc || !deliveryInstruction || !value  ){
+          if(!sendersName || !sendersPhoneNumber || !receiversName || !receiversPhoneNumber || !parcelName || !deliveryInstruction || !value  ){
             setFillInDetails(true)
             return
           } 
-          
+          console.log('clicked for delivery')
             handleDeliveryInput()
            
         }
@@ -106,7 +113,9 @@ export default InstantDeliveryInput=()=>{
     formdata.append("pickup_lat", origin.location.lat);
     formdata.append("pickup_long", origin.location.lng);
     formdata.append("amount", amountForDelivery);
-    images.forEach((image,index) =>{
+    formdata.append("pickup_date", '2023/7/7');
+    formdata.append("pickup_time", '18:16:24');
+    images?.forEach((image,index) =>{
       formdata.append("images[]",{
         uri: image.uri,
         name: image.fileName,
@@ -124,44 +133,149 @@ export default InstantDeliveryInput=()=>{
       data: formdata,
     }
     
-
+// console.log(formdata)
     
         const handleDeliveryInput =async()=>{
     
-          // setLoading(true)
+          setLoading(true)
        try {
        
      let eachDelivery = await axios.request(reqOptions);
-     console.log(eachDelivery.data);
+     console.log('-----',eachDelivery.data);
     
          dispatch(setDeliveryDetails(eachDelivery.data))
-        //  setLoading(false)
-        
-            navigation.navigate('Delivery Summary')
-         
+       
+         navigation.navigate('Delivery Summary', { matchedData: matchedData });
+           setLoading(false)
     
        } catch (error) {
-        console.error(error)
-        //  if(error.response.status !== 500 ){
-           
-        //              if(error.response.data.errors.email){
-        //                console.log(error.response.data.errors.email[0])
-        //                setErrorMessage(error.response.data.errors.email[0])
-        //              } else if (error.response.data.errors.password){
-        //                setErrorMessage(error.response.data.errors.password[0])
-        //              console.log(error.response.data.errors.password[0])
-                     
-        //              }
-    
-        //    setFeedbackMessage('')
-      
-        //  } 
-        //   else {
-        //    setErrorMessage('')
-        //  }
+        console.error(error.response)
+        
+        if (error.response) {
+          setErrorMessage('An error occurred during pairing. Please check your Network provider and try again.');
+        }
+
        }
        
      }
+
+     let headersList = {
+      "Accept": "/",
+      "Authorization": `Bearer ${userInfo.token}`
+    }
+
+    // console.log('-----',deliveryDetails)
+
+
+    const fetchDriverReply = async () => {
+      setLoading(true);
+      console.log('fetching......');
+
+      let reqOptions;
+      try {
+
+        // if (deliveryDetails?.locations.length) {
+          reqOptions = {
+            url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}/${deliveryDetails.locations[0].driver_id}`,
+            method: "GET",
+            headers: headersList,
+          };
+
+          const response = await axios.request(reqOptions);
+          setMatchedData(response.data.status);
+          console.log('---', matchedData);
+
+          if (response.data.status[0].status === 1) {
+            navigation.navigate('Delivery Summary', { matchedData: matchedData });
+          } else if (response.data.status[0].status === 0 && deliveryDetails.locations[1]) {
+            reqOptions = {
+              url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}/${deliveryDetails.locations[1].driver_id}`,
+              method: "GET",
+              headers: headersList,
+            };
+
+            const responseTWO = await axios.request(reqOptions);
+            setMatchedData(responseTWO.data.status);
+            console.log('---', matchedData);
+
+            if (responseTWO.data.status[0].status === 1) {
+              navigation.navigate('Delivery Summary', { matchedData: matchedData });
+            } else {
+              console.log('modal to redirect to scheduled');
+              setModalVisible(true);
+              setLoading(false);
+            }
+          } 
+          // else {
+            // console.log('modal to redirect to scheduled');
+            // setModalVisible(true);
+            // setLoading(false);
+          // }
+        // }
+      } catch (error) {
+        console.log(error.response);
+      } 
+      // finally {
+      //   setLoading(false);
+      // }
+    };
+
+
+    // let interval;
+  
+    useEffect(() => {
+    
+
+        //  interval = setInterval(() => {
+          // if(deliveryDetails.locations.length){
+            
+          // }
+        
+        // }, 5000);
+        // fetchDriverReply()
+
+        // return () => clearInterval(interval);
+ 
+    }, []);
+
+
+  // // Memoize the data and listen to changes in the API
+  // const memoizedData = useMemo(() => matchedData, [matchedData]);
+
+     console.log('=====1====',matchedData)
+   
+
+
+    // useEffect(()=>{
+
+    //   const fetchMatchedDriver =async()=>{
+
+    //     try {
+    //       let reqOptions = {
+    //         url: `https://ryder-app-production.up.railway.app/api/agent/delivery/instant/${agentInfo.driver.id}`,
+    //         method: "GET",
+    //         headers: headersList,
+    //       }
+      
+    //       let response = await axios.request(reqOptions);
+
+    //       // setAllInstantDeliveryDetails(response.data.deliveries)
+
+    //       // setInstantSlicedDetails(allInstantDeliveryDetails.slice(-1))
+    //       // dispatch(setInstantDeliveryDetails(instantSlicedDetails))
+    //       // if(instantDeliveryDetails.length){
+    //       //     setModalVisible(true)
+    //       // }
+
+    //     } catch (error) {
+    //       console.error(error.response.data)
+    //     }
+
+    //   }
+
+    //   fetchMatchedDriver()
+
+    // }, [])
   
 
     return(
@@ -195,7 +309,7 @@ export default InstantDeliveryInput=()=>{
             <Text>Senders Name*</Text>
             <TextInput
                     style={styles.input}
-                    autoCapitalize="none"
+                    autoCapitalize="words"
                     autoCorrect={false}
                     textContentType="name"
                     onFocus={()=>{setFillInDetails(false)}}
@@ -225,7 +339,7 @@ export default InstantDeliveryInput=()=>{
             <Text  style={{ marginTop: 20}}>Receivers Name*</Text>
             <TextInput
                     style={styles.input}
-                    autoCapitalize="none"
+                    autoCapitalize="words"
                     autoCorrect={false}
                     textContentType="name"
                     onFocus={()=>{setFillInDetails(false)}}
@@ -285,7 +399,7 @@ export default InstantDeliveryInput=()=>{
                 )}
             />
 
-            <Text  style={{ marginTop: 20}}>Parcel Description</Text>
+            {/* <Text  style={{ marginTop: 20}}>Parcel Description</Text>
             <TextInput
                     style={styles.inputTwo}
                     autoCapitalize="none"
@@ -294,7 +408,7 @@ export default InstantDeliveryInput=()=>{
                     onFocus={()=>{setFillInDetails(false)}}
                     value={parcelDesc}
                     onChangeText={(text) => setParcelDesc(text)}
-                />
+                /> */}
                  <Text  style={{ marginTop: 20}}>Delivery Instructions</Text>
                    <TextInput
                     style={styles.inputThree}
@@ -340,10 +454,13 @@ export default InstantDeliveryInput=()=>{
 
                 </View>
 
-                <Text  style={{ marginTop: 20}}>Maximum of 2 images are allowed</Text>
+                <Text  style={{ marginTop: 20}}>*Maximum of 2 images are allowed (Images must not be more than 1.9mb)</Text>
 
                 <Text  style={{ marginTop: 20, marginRight: 14}}>N/B: The closest available BIKE delivery agent would receive and confirm your request after which you’ll be directed to the payment page.</Text>
-                
+               
+                {fillInDetails &&  <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:170, fontSize:15}}>Fill in all delivery details</Text>}
+                {errorMessage ? <Text style={{textAlign:'left',alignSelf:'flex-end', marginRight:40, color:'red', width:230, fontSize:15}}>{errorMessage}</Text> : null}
+                {loading ? <Loader loadingText='wait while we pair you with an available agent around your pickup location' /> : null}
                 <TouchableOpacity
                 onPress={clickOnNext}
                  style={styles.button} >
@@ -355,6 +472,31 @@ export default InstantDeliveryInput=()=>{
             
           </View>
          </View>
+
+         <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+          setModalVisible(!modalVisible);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+          <Image
+            style={{width:"60%", height: "45%", resizeMode: 'contain', marginBottom:-40,}}
+            source={require('../assets/fast.png')}
+            />
+            <Text style={styles.modalTextBold}>Oops! No delivery agent available around your location</Text>
+            <Text style={styles.modalText}>Schedule your delivery with our admin instead</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonClose]}
+              onPress={()=>navigation.navigate('Homepage')}>
+              <Text style={styles.textStyle}>Schedule with admin</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal> 
     
        {/* </KeyboardAvoidingView>*/}
        </ScrollView> 
@@ -428,6 +570,71 @@ const styles = StyleSheet.create({
         height: 40,
         fontSize: 16,
       },
+      centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+        width:'100%',
+        backdropFilter: 'blur(10px)'
+       
+      },
+      modalView: {
+        display:'flex',
+        justifyContent: 'center',
+        width:'100%',
+        height:'100%',
+        alignSelf:'center',
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      },
+      buttonOpen: {
+        backgroundColor: '#E7B717',
+        height: 58,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+        width: '80%',
+        marginBottom:20
+      },
+      buttonClose: {
+        backgroundColor: '#E7B717',
+        height: 58,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 20,
+        width: '80%',
+        marginBottom:40
+      },
+      textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+      },
+      modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+      },
+      modalTextBold: {
+        marginBottom: 15,
+        textAlign: 'center',
+        fontWeight:'bold',
+        fontSize:18
+      },
+    
   
   });
   

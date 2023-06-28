@@ -6,7 +6,7 @@ const initialState = {
     destination:null,
     travelTimeInformation: null,
     deliveryMedium:{name:'car',amount: 100},
-    deliveryType: 'Instant',
+    deliveryType: 'instant',
     deliveryDetails: null
    
 }

@@ -22,8 +22,8 @@ export default ScheduleDeliverySummary=()=>{
     const destination = useSelector(selectDestination)
     const deliveryType = useSelector(selectDeliveryType)
     const deliveryDetails = useSelector(selectDeliveryDetails)
-
-    console.log(deliveryDetails.parcelImages)
+    const userInfo = useSelector(selectUserInfo)
+    // console.log('----',deliveryDetails)
 
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -36,6 +36,45 @@ export default ScheduleDeliverySummary=()=>{
       
     }
 
+    console.log(userInfo.token)
+
+    let headersList = {
+      "Accept": "/",
+      "Authorization": `Bearer ${userInfo.token}`
+     }
+
+    //  let reqOptions = {
+    //   url: `https://ryder-app-production.up.railway.app/api/user/deliveries?deliveryType=admin`,
+    //   method: "PUT",
+    //   headers: headersList,
+      
+    // }
+
+    const handleAdminSchedule =async()=>{
+      try {
+        const { data } = await axios({
+            method: 'put',
+            url: `https://ryder-app-production.up.railway.app/api/user/deliveries/${deliveryDetails.data.id}`,
+            data: {
+                deliveryType: 'admin',
+            },
+            headers:headersList
+        });
+    
+        console.log('------deliveryType update',data);
+        setModalVisible(false)
+          navigation.navigate('Payment Options')
+    } catch (err) {
+      console.log(err.response)
+        // if (err.response.status === 404) {
+        //     console.log('Resource could not be found!');
+        // } else {
+        //     console.log(err.message);
+        // }
+    }
+    }
+
+    console.log('---=====----', deliveryDetails)
     return(
         <ScrollView>
         <View style={{backgroundColor: 'white'}}>
@@ -92,12 +131,12 @@ export default ScheduleDeliverySummary=()=>{
              />
 
              <View >
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Delivery Agent : George Bush</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Vehicle Type : yamaha Bike </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Vehicle Color : Red</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Agent ID: 6789</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Plate no : LAG564OS</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:400}}>Phone no : 08067919787</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Delivery Agent : George Bush</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Vehicle Type : yamaha Bike </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Vehicle Color : Red</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Agent ID: 6789</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Plate no : LAG564OS</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:"normal"}}>Phone no : 08067919787</Text>
              </View> */}
 
             {/* </View> */}
@@ -127,8 +166,8 @@ export default ScheduleDeliverySummary=()=>{
              <View style={{margin:15, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
                 <Text>Schedule delivery date/time</Text>
                 <View>
-                    <Text style={{padding:20, backgroundColor:'lightgray',margin:5,fontSize:15}}>23/03/2023</Text>
-                    <Text style={{padding:20, backgroundColor:'lightgray',margin:5,fontSize:15}}>08:23 AM</Text>
+                    <Text style={{padding:20, backgroundColor:'lightgray',margin:5,fontSize:15}}>{deliveryDetails.data.pickup_date}</Text>
+                    <Text style={{padding:20, backgroundColor:'lightgray',margin:5,fontSize:15}}>{deliveryDetails.data.pickup_time}</Text>
                 </View>
              </View>
 
@@ -147,18 +186,14 @@ export default ScheduleDeliverySummary=()=>{
              <Image
                 style={{width:82,height:71, borderRadius: 10}}
                 resizeMode="cover"
-                source={{uri: deliveryDetails.parcelImages[0].url}}
+                source={{uri: deliveryDetails.parcelImages[0]?.url}}
              />
               <Image
                 style={{width:82,height:71, borderRadius: 10}}
                 resizeMode="cover"
-                source={{uri: deliveryDetails.parcelImages[1].url}}
+                source={{uri: deliveryDetails.parcelImages[1]?.url}}
              />
-              {/* <Image
-                style={{width:82,height:71, borderRadius: 10}}
-                resizeMode="cover"
-                source={require('../assets/nike3.png')}
-             /> */}
+             
              </View>
 
              <View style={{margin:20}}>
@@ -204,7 +239,7 @@ export default ScheduleDeliverySummary=()=>{
             <Text style={styles.modalText}>Schedule your delivery with our admin instead</Text>
             <TouchableOpacity
               style={[styles.button, styles.buttonClose]}
-              onPress={() => {setModalVisible(!modalVisible),  navigation.navigate('Payment Options')}}>
+              onPress={handleAdminSchedule}>
               <Text style={styles.textStyle}>Schedule with admin</Text>
             </TouchableOpacity>
           </View>

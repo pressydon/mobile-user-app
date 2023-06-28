@@ -9,21 +9,21 @@ import axios from 'axios'
 import {useDispatch} from 'react-redux'
 
 
-export default CompletedViewDetails=()=>{
+export default CompletedViewDetails=({route})=>{
 
     const deliveryMedium = useSelector(selectDeliveryMedium)
     const deliveryType = useSelector(selectDeliveryType)
     const origin = useSelector(selectOrigin)
     const destination = useSelector(selectDestination)
     const deliveryDetails = useSelector(selectDeliveryDetails)
-    
     const userInfo = useSelector(selectUserInfo)
-  
     const dispatch = useDispatch()
 
     const navigation = useNavigation()
 
-    console.log(deliveryDetails.id)
+    // console.log(deliveryDetails.id)
+
+    const {item} = route.params
 
     const createTwoButtonAlert = () =>
     Alert.alert('Report Delivery', 'Are you sure you want to report this delivery?', [
@@ -32,7 +32,7 @@ export default CompletedViewDetails=()=>{
         onPress: () => console.log('Cancel Pressed'),
         style: 'cancel',
       },
-      {text: 'Yes', onPress: () => navigation.navigate('CompletedDeliveryReport')},
+      {text: 'Yes', onPress: () => navigation.navigate('CompletedDeliveryReport',{item})},
     ]);
 
   
@@ -44,7 +44,7 @@ export default CompletedViewDetails=()=>{
           
             <View>
 
-            <Text  style={{margin:20, fontWeight:'bold', fontSize:16}}>{deliveryDetails.data.deliveryType} delivery : ID {deliveryDetails.data.id}</Text>
+            <Text  style={{margin:20, fontWeight:'bold', fontSize:16}}>{item.deliveryType} delivery : ID {item.id}</Text>
 
             <View style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
 
@@ -75,7 +75,7 @@ export default CompletedViewDetails=()=>{
 
                     <View style={{marginLeft:20, paddingRight: 20}}>
                     <Text>Pick up location</Text>
-                    <Text>{deliveryDetails.data.pickup_name}</Text>
+                    <Text>{item.pickup_name}</Text>
 
                      <View style={{display:'flex',flexDirection: 'row',alignItems:'center', justifyContent:"center",gap:20,marginTop:5}}>
                     <Icon
@@ -99,7 +99,7 @@ export default CompletedViewDetails=()=>{
                     </View>
                     <View style={{marginLeft:20, paddingRight: 20}}>
                     <Text>Drop off location</Text>
-                    <Text>{deliveryDetails.data.dropoff_name}</Text>
+                    <Text>{item.dropoff_name}</Text>
 
                     <View style={{display:'flex',flexDirection: 'row',alignItems:'center', justifyContent:"center",gap:20,marginTop:5}}>
                         <Icon
@@ -121,7 +121,7 @@ export default CompletedViewDetails=()=>{
 
                 <Text style={{margin:15, fontSize:18}}>Delivery Details</Text>
 
-          { deliveryDetails.locations.length !== 0 && <View  style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+          {/* { deliveryDetails.locations.length !== 0 && <View  style={{margin:10, display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
             <Image
                 style={{width:118,height:118, borderRadius: 50}}
                 resizeMode="contain"
@@ -137,29 +137,28 @@ export default CompletedViewDetails=()=>{
                 <Text style={{fontSize:14,lineHeight: 24,fontWeight:'bold'}}>Phone no : 08067919787</Text>
              </View>
 
-            </View>}
+            </View>} */}
 
             </View>
 
             <View style={{width:'80%', height:1, backgroundColor:'lightgray',alignSelf:"center",margin:10}}></View>
             
             <View style={{width:'80%',alignSelf:'center'}}>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders name : {deliveryDetails.data.sendersName}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders Phone number : {deliveryDetails.data.sendersPhone} </Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers name : {deliveryDetails.data.receiversName}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers Phone number: {deliveryDetails.data.phoneNumber}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Code: {deliveryDetails.data.id}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel name : {deliveryDetails.data.parcelName}</Text>
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel type : {deliveryDetails.data.parcelType}</Text>
-                {/* <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel description : {deliveryDetails.data.parcelDesc}</Text> */}
-                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Instruction : {deliveryDetails.data.deliveryInstruction} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders name : {item.sendersName}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Senders Phone number :+234 {item.sendersPhone} </Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers name : {item.receiversName}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Receivers Phone number: +234 {item.receiversPhone}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Code: {item.id}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel name : {item.parcelName}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Parcel type : {item.parcelType}</Text>
+                <Text style={{fontSize:14,lineHeight: 24,fontWeight:'normal'}}>Delivery Instruction : {item.deliveryInstruction} </Text>
              </View>
 
             <View style={{marginTop:20,alignSelf:'right', width:'100%',display:'flex', flexDirection:'row', alignItems:'flex-end',justifyContent:'space-around'}}>
             <Text>Delivery fee:</Text>
             <View style={{ borderBottomWidth: 4, borderColor: '#E7B717', borderStyle:'solid'}}>
 
-            <Text style={{  fontSize: 20, fontWeight:'bold', borderBottomWidth: 2, borderColor: '#E7B717', borderStyle:'solid'}}>#{deliveryDetails.data.amount}</Text>
+            <Text style={{  fontSize: 20, fontWeight:'bold', borderBottomWidth: 2, borderColor: '#E7B717', borderStyle:'solid'}}>#{item.amount}</Text>
 
             </View>
         
@@ -188,7 +187,7 @@ export default CompletedViewDetails=()=>{
 
             
 
-          <TouchableOpacity onPress={()=>navigation.navigate('CompletedReviewFeedbackScreen')} style={styles.button}>
+          <TouchableOpacity onPress={()=>navigation.navigate('CompletedReviewFeedbackScreen',{item})} style={styles.button}>
             <Text style={{color:'goldenrod', fontWeight:'bold'}}>Leave a Review</Text>
           </TouchableOpacity>
 

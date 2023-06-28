@@ -6,15 +6,18 @@ import {  selectDeliveryDetails } from "../slices/navSlice";
 import { selectUserInfo } from "../slices/authSlice";
 import axios from 'axios'
 import { useNavigation } from "@react-navigation/native";
+import Loader from "../components/Loader";
 
 
-export default CompletedDeliveryReport =()=>{
+export default CompletedDeliveryReport =({route})=>{
 
   const [checked, setChecked] = useState(true);
   const deliveryDetails = useSelector( selectDeliveryDetails)
   const [fillInDetails, setFillInDetails] = useState(false)
-  console.log('-----',deliveryDetails)
+  
+  const [loading, setLoading] = useState(false)
 
+  const {item} = route.params
 
   const [selectedIndex, setIndex] = useState(0);
 
@@ -43,13 +46,9 @@ export default CompletedDeliveryReport =()=>{
       }
     }, [reportReason,selectedIndex])
 
-    // (deliveryDetails)
-
-    // const handleCheckboxToggle = () => {
-    //   setIsChecked(!isChecked);
-    // };
+  
     let formdata = new FormData();
-    formdata.append("delivery_id", deliveryDetails.data.id);
+    formdata.append("delivery_id", item.id);
     formdata.append("reason", reportReason);
     formdata.append("description", reportDescription);
 
@@ -74,15 +73,19 @@ export default CompletedDeliveryReport =()=>{
         return
       } 
       
+      setLoading(true)
       try {
 
         let eachReport = await axios.request(reqOptions);
         console.log(eachReport.data);
           
         setModalVisible(true)
-        
+        setLoading(false)
       } catch (error) {
-        console.error(error.response.data)
+        console.error(error.response)
+        if(error){
+          setLoading(false)
+        }
       }
     }
 
@@ -184,7 +187,7 @@ export default CompletedDeliveryReport =()=>{
                     </View>
                     </View>
                 </Modal>
-
+                    {loading ? <Loader /> : null}
         </View>
     )
 }

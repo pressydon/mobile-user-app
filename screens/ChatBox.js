@@ -1,12 +1,16 @@
 
 
 import { useNavigation } from "@react-navigation/native"
-import { useState } from "react"
+import { useState, useEffect, useLayoutEffect } from "react"
 import { StyleSheet } from "react-native"
 import { ScrollView, Text, TouchableOpacity, View } from "react-native"
 import { Card, Icon, Avatar  } from 'react-native-elements'
 import { Chat, defaultTheme, MessageType } from '@flyerhq/react-native-chat-ui'
 import { ReactNode } from 'react'
+import { useSelector } from "react-redux"
+import { selectDeliveryDetails } from "../slices/navSlice"
+import { selectAgentInfo, selectUserInfo } from "../slices/authSlice"
+import axios from "axios"
 
 
 
@@ -19,25 +23,133 @@ const uuidv4 = () => {
     })
   }
 
-export default ChatBox=()=>{
+export default ChatBox=({route})=>{
 
 
+  const userInfo = useSelector(selectUserInfo)
+
+  const {item} = route.params
+ 
+  const [allMessages, setAllMessages] = useState([])
+  const [allPrevMessages, setAllPrevMessages] = useState([])
+  
     const [messages, setMessages] = useState([])
-    const user = { id: '06c33e8b-e835-4736-80f4-63f44b66666c' }
+    const [inputMessage, setInputMessages] = useState([])
+    let receivedMessages = [] 
+   
+    console.log(item)
+
+    const user = {
+      id: userInfo.user.id,
+      name: 'Jane Dog',
+      avatar: 'https://example.com/avatar.jpg',
+    };
+
+    const url = 'https://ryder-app-production.up.railway.app/api/user/message'
   
-    const addMessage = (message) => {
-      setMessages([message, ...messages])
-    }
   
-    const handleSendPress = (message) => {
+
+    const headers = {
+      'Authorization': `Bearer ${userInfo.token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const handleSendPress = async(message) => {
       const textMessage = {
         author: user,
-        createdAt: Date.now(),
+        created_at: Date.now(),
         id: uuidv4(),
         text: message.text,
         type: 'text',
+      
       }
       addMessage(textMessage)
+
+
+      const data = {
+        content: message.text,
+        receiver_id: `${item.driver_id}`,
+        receiver_type: "driver"
+      };
+      console.log(message.text)
+    
+
+      try {
+
+    const postedMessage = await axios.post(url, data, { headers })
+
+        console.log(postedMessage)
+        
+      } catch (error) {
+        console.error(error.response)
+        
+      }
+    }
+
+    let returnedMessages;
+
+    useEffect(()=>{
+
+      const fetchMessages=async()=>{
+
+        try {
+        returnedMessages = await axios.get('https://ryder-app-production.up.railway.app/api/user/messages', { headers })
+          console.log('all-messages',returnedMessages.data.messages)
+
+          setAllMessages(returnedMessages.data.messages)
+
+        } catch (error) {
+          console.error(error.response)
+        }
+
+      }
+
+
+      fetchMessages()
+
+    }, [])
+
+  
+
+    receivedMessages = allMessages
+    .filter((messageObj)=> messageObj.receiver !== messageObj.sender)
+    .map((messageObj)=>{
+      const textMessage = {
+        author: messageObj.sender,
+        // author: user,
+        created_at: new Date(messageObj.created_at),
+        id: uuidv4(),
+        text: messageObj.content,
+        type: 'text',
+      }
+      // console.log(messageObj)
+      return textMessage
+
+    })
+
+    const addMessage = (newMessage) => {
+      setMessages((prevMessages) => [...prevMessages, newMessage].sort((b, a) => b.id - a.id));
+    };
+   
+ 
+    const updatedMessages = [...messages, ...receivedMessages].reverse();
+  
+
+    console.log(updatedMessages)
+
+    const sortedMessages = updatedMessages.sort((a,b)=> a.created_at - b.created_at)
+
+    console.log('----pp---',updatedMessages)
+
+    const handlePreviewDataFetched = ({
+      message,
+      previewData,
+    }) => {
+      setMessages(
+        messages.map((m) =>
+          m.id === message.id ? { ...m, previewData } : m
+        )
+      )
     }
 
 
@@ -65,25 +177,25 @@ export default ChatBox=()=>{
         )
       }
 
-
   
 
     return(
-        // <ScrollView>
+       
         <View style={{backgroundColor:'white',width:'100%',height:'100%',padding:20}}>
                  
             <Chat
-                messages={messages}
+                messages={sortedMessages}
                 onSendPress={handleSendPress}
                 user={user}
                 renderBubble={renderBubble}
+                onPreviewDataFetched={handlePreviewDataFetched}
                 theme={{
                   ...defaultTheme,
                   colors: { ...defaultTheme.colors, inputBackground: '#E7B717' },
                 }}
             />
         </View>
-    // </ScrollView>
+   
     )
 }
 

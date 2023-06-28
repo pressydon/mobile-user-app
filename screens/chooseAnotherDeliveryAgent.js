@@ -107,7 +107,7 @@ export default ChooseAnotherDeliveryAgent=()=>{
              color='black'
              type='antdesign'
               />
-              <Text style={{fontSize:23, fontWeight:600,margin:10}}>choose another agent</Text>
+              <Text style={{fontSize:23, fontWeight:'bold',margin:10}}>choose another agent</Text>
 
               <FlatList
                   style={styles.content}
@@ -126,7 +126,7 @@ export default ChooseAnotherDeliveryAgent=()=>{
                 source={{ uri: item.img}} 
              />
              <View style={{display:'flex', alignItems:"center", justifyContent:'space-between'}}>
-             <Text  style={{ fontSize:20, fontWeight:600,}} >{item.name}</Text>
+             <Text  style={{ fontSize:20, fontWeight:'bold',}} >{item.name}</Text>
              <Text  style={styles.amount}>Vehicle name: {item.medium}</Text>
              </View>
             </View>

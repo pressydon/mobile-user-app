@@ -7,23 +7,22 @@ import { selectUserInfo } from "../slices/authSlice";
 import axios from 'axios'
 import {useDispatch} from 'react-redux'
 import { useNavigation } from "@react-navigation/native";
+import Loader from "../components/Loader";
 
 
-export default CompletedReviewFeedbackScreen =()=>{
+export default CompletedReviewFeedbackScreen =({route})=>{
 
   
-  const deliveryDetails = useSelector( selectDeliveryDetails)
   const [fillInDetails, setFillInDetails] = useState(false)
 
-  console.log('-----',deliveryDetails)
+  const {item} = route.params
   
   const userInfo = useSelector(selectUserInfo)
-
-  console.log(feedbackDescription, rated, deliveryDetails.data.id)
+ const [loading, setLoading] = useState(false)
 
   const navigation = useNavigation()
 
-    const [rated, setRated] = useState(false);
+    const [rated, setRated] = useState(4);
     const [modalVisible, setModalVisible] = useState(false);
     
     const ratingCompleted = (rating) => {
@@ -31,14 +30,15 @@ export default CompletedReviewFeedbackScreen =()=>{
         setRated(rating)
       };
 
-      console.log(rated);
+      // console.log(Math.floor(rated));
   
     const [feedbackDescription, setFeedbackDescription] = useState('');
 
+    console.log('----',Math.round(rated))
 
     let formdata = new FormData();
-    formdata.append("delivery_id", deliveryDetails.data.id);
-    formdata.append("stars", rated);
+    formdata.append("delivery_id", item.id);
+    formdata.append("stars", Math.round(rated));
     formdata.append("review", feedbackDescription);
 
     console.log(formdata)
@@ -61,6 +61,7 @@ export default CompletedReviewFeedbackScreen =()=>{
         return
       } 
 
+      setLoading(true)
       try {
 
         let eachReport = await axios.request(reqOptions);
@@ -68,9 +69,12 @@ export default CompletedReviewFeedbackScreen =()=>{
        
           
         setModalVisible(true)
-        
+        setLoading(false)
       } catch (error) {
         console.error(error.response.data)
+        if(error){
+          setLoading(false)
+        }
       }
     }
 
@@ -133,7 +137,7 @@ export default CompletedReviewFeedbackScreen =()=>{
                     </View>
                     </View>
                 </Modal>
-
+                {loading ? <Loader /> : null}
         </View>
     )
 }

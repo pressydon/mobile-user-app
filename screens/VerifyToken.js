@@ -42,10 +42,10 @@ export default function VerifyToken() {
       const verifyUser = async()=>{
         try {
 
-          console.log(value)
-          if (+value === userInfo.otp){
+          console.log(userInfo.user.otp)
+          if (+value === userInfo.user.otp){
           
-            await axios.post(`https://ryder-app-production.up.railway.app/api/user/verify?otp=${userInfo.otp}`, {
+            await axios.post(`https://ryder-app-production.up.railway.app/api/user/verify?otp=${userInfo.user.otp}`, {
               headers: {
                 Authorization: `Bearer ${userInfo.token}`,
               },
@@ -57,7 +57,7 @@ export default function VerifyToken() {
   
           
         } catch (error) {
-          console.error(error.response.data)
+          console.error(error.response)
         }
     
 
@@ -130,6 +130,7 @@ export default function VerifyToken() {
                 </View> */}
 
 <Text style={styles.title}>Verify Token</Text>
+<Text style={{textAlign:'center',marginBottom:40 }}>Ensure you type the right token from your email</Text>
       <CodeField
         ref={ref}
         {...props}
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
   },
 
   root: {flex: 1, padding: 20, },
-  title: {textAlign: 'center', fontSize: 30, marginTop:50,marginBottom:50},
+  title: {textAlign: 'center', fontSize: 30, marginTop:50,marginBottom:10},
   codeFieldRoot: {marginTop: 20, width:'80%', alignSelf:'center'},
   cell: {
     width: 50,

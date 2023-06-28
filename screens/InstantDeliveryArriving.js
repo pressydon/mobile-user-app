@@ -4,6 +4,9 @@ import { Image, Text, TouchableOpacity, View } from "react-native"
 import { useNavigation } from "@react-navigation/native";
 import { Avatar, Badge, Icon, withBadge } from 'react-native-elements'
 import Map from "../components/Map";
+import { useSelector } from "react-redux";
+import { selectUserInfo } from "../slices/authSlice";
+import { selectDeliveryDetails } from "../slices/navSlice";
 
 
 
@@ -16,6 +19,16 @@ export default InstantDeliveryArriving=()=>{
 
     const supportedURL = 'tel:+2348067919787';
     const unsupportedURL = 'slack://open?team=123456';
+
+    const userInfo = useSelector(selectUserInfo)
+    const deliveryDetails = useSelector(selectDeliveryDetails)
+
+    console.log(deliveryDetails)
+
+    // get drivers matched details to display on this page
+    
+
+
 
     
         const handlePress = useCallback(async () => {
